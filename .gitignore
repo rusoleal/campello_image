@@ -1,0 +1,8 @@
+**.DS_Store
+build
+build_test
+build_macos
+build_ios
+build_android
+build_windows
+build_linux
