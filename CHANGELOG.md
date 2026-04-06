@@ -2,6 +2,14 @@
 
 All notable changes to campello_image are documented here.
 
+## [0.3.1] - 2026-04-06
+
+### Changed
+- **googletest** — upgraded from v1.14.0 to v1.17.0
+
+### Build
+- **Unity build** — enabled to reduce compilation time; selectively disabled for libwebp targets with internal naming conflicts
+
 ## [0.3.0] - 2026-04-06
 
 ### Changed

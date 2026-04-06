@@ -1,9 +1,12 @@
 cmake_minimum_required(VERSION 3.22.1)
 
-project(campello_image VERSION 0.3.0)
+project(campello_image VERSION 0.3.1)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Enable unity build to reduce compilation time for dependencies (e.g., libwebp)
+set(CMAKE_UNITY_BUILD ON)
 
 message(STATUS "CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
 
@@ -31,6 +34,21 @@ FetchContent_Declare(
     GIT_TAG        v1.6.0
 )
 FetchContent_MakeAvailable(libwebp)
+
+# Disable unity build for libwebp targets that have internal naming conflicts
+set(LIBWEBP_TARGETS
+    sharpyuv
+    webpdecode
+    webpencode
+    webpdsp
+    webpdspdecode
+    webputilsdecode
+)
+foreach(target IN LISTS LIBWEBP_TARGETS)
+    if(TARGET ${target})
+        set_target_properties(${target} PROPERTIES UNITY_BUILD OFF)
+    endif()
+endforeach()
 
 # ---------------------------------------------------------------------------
 # Platform dispatch

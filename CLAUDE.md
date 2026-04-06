@@ -71,7 +71,7 @@ Output is always **RGBA8** — 4 bytes per pixel, regardless of the source file'
 |------------|-------------|-------|
 | stb_image | Vendored at `src/stb_image.h` | Header-only; `STB_IMAGE_IMPLEMENTATION` defined in `image.cpp` |
 | libwebp | CMake `FetchContent`, tag `v1.5.0` | Links `webpdecoder` only (no encoder) |
-| googletest | CMake `FetchContent`, tag `v1.14.0` | Test builds only |
+| googletest | CMake `FetchContent`, tag `v1.17.0` | Test builds only |
 
 ### Tests
 
