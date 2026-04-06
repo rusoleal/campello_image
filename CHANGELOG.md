@@ -2,6 +2,11 @@
 
 All notable changes to campello_image are documented here.
 
+## [0.2.0] - 2026-04-06
+
+### Added
+- **`THIRD_PARTY_LICENSES`** — attribution file for vendored and fetched dependencies (stb_image MIT, libwebp BSD 3-Clause)
+
 ## [0.1.0] - 2026-04-06
 
 ### Added
