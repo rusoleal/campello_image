@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22.1)
 
-project(campello_image VERSION 0.2.0)
+project(campello_image VERSION 0.3.0)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -27,8 +27,8 @@ set(WEBP_BUILD_WEBPMUX    OFF CACHE BOOL "" FORCE)
 set(WEBP_BUILD_EXTRAS     OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(
     libwebp
-    GIT_REPOSITORY https://chromium.googlesource.com/webm/libwebp
-    GIT_TAG        v1.5.0
+    GIT_REPOSITORY https://github.com/webmproject/libwebp.git
+    GIT_TAG        v1.6.0
 )
 FetchContent_MakeAvailable(libwebp)
 

@@ -2,6 +2,11 @@
 
 All notable changes to campello_image are documented here.
 
+## [0.3.0] - 2026-04-06
+
+### Changed
+- **libwebp** — upgraded from v1.5.0 to v1.6.0 (fetched from GitHub mirror for better reliability)
+
 ## [0.2.0] - 2026-04-06
 
 ### Added

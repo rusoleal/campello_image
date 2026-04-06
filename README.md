@@ -13,7 +13,7 @@ Designed as a companion to [campello_gpu](https://github.com/rusoleal/campello_g
 | BMP    | stb_image (vendored) |
 | TGA    | stb_image (vendored) |
 | GIF    | stb_image (vendored, first frame only) |
-| WebP   | libwebp v1.5.0 |
+| WebP   | libwebp v1.6.0 |
 
 ## Platforms
 
