@@ -4,6 +4,15 @@ A cross-platform C++20 image loading library. Decodes JPEG, PNG, BMP, TGA, GIF, 
 
 Designed as a companion to [campello_gpu](https://github.com/rusoleal/campello_gpu) — no dependency on it.
 
+## 🚀 Part of the Campello Engine
+
+This project is a module within the **Campello** ecosystem.
+
+👉 Main repository: https://github.com/rusoleal/campello
+
+Campello is a modular, composable game engine built as a collection of independent libraries.
+Each module is designed to work standalone, but integrates seamlessly into the engine runtime.
+
 ## Supported formats
 
 | Format | Decoder |
