@@ -2,6 +2,21 @@
 
 All notable changes to campello_image are documented here.
 
+## [0.4.0] - 2026-04-23
+
+### Added
+- **HDR (Radiance `.hdr`) support** — decoded via stb_image to RGBA32F; detected by `#?RADIANCE` / `#?RGBE` magic bytes
+- **OpenEXR (`.exr`) support** — decoded via tinyexr v1.0.0 (vendored single-header) to RGBA32F
+- **`ImageFormat::rgba16f`** and **`ImageFormat::rgba32f`** — pixel format enum variants for floating-point output
+- **`PixelSource::tinyexr`** — internal allocator tracking for EXR pixel buffers
+
+### Changed
+- **`Image::getData()`** return type changed from `const uint8_t*` to `const void*`. Callers must cast based on `getFormat()`:
+  - `ImageFormat::rgba8`   → `static_cast<const uint8_t*>(img->getData())`
+  - `ImageFormat::rgba32f` → `static_cast<const float*>(img->getData())`
+- **`Image::getDataSize()`** now accounts for the actual pixel format (4, 8, or 16 bytes per pixel)
+- **`Image::getFormat()`** is no longer hard-coded to `rgba8`; it returns the format determined by the decoder
+
 ## [0.3.1] - 2026-04-06
 
 ### Changed

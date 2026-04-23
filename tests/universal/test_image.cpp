@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <campello_image/image.hpp>
 
+#include <cmath>
 #include <string>
 
 using namespace systems::leal::campello_image;
@@ -35,7 +36,7 @@ static constexpr uint8_t kWhite1x1Webp[] = {
 };
 
 // ---------------------------------------------------------------------------
-// Helper — shared assertions for any successfully loaded 32×32 image
+// Helpers — shared assertions for any successfully loaded 32×32 image
 // ---------------------------------------------------------------------------
 static void assertValid32x32Rgba8(const std::shared_ptr<Image>& img)
 {
@@ -44,6 +45,16 @@ static void assertValid32x32Rgba8(const std::shared_ptr<Image>& img)
     EXPECT_EQ(img->getHeight(),   32u);
     EXPECT_EQ(img->getFormat(),   ImageFormat::rgba8);
     EXPECT_EQ(img->getDataSize(), 32u * 32u * 4u);
+    EXPECT_NE(img->getData(),     nullptr);
+}
+
+static void assertValid32x32Rgba32f(const std::shared_ptr<Image>& img)
+{
+    ASSERT_NE(img, nullptr);
+    EXPECT_EQ(img->getWidth(),    32u);
+    EXPECT_EQ(img->getHeight(),   32u);
+    EXPECT_EQ(img->getFormat(),   ImageFormat::rgba32f);
+    EXPECT_EQ(img->getDataSize(), 32u * 32u * 16u);
     EXPECT_NE(img->getData(),     nullptr);
 }
 
@@ -148,4 +159,44 @@ TEST(ImageFormats, Gif)
 TEST(ImageFormats, Webp)
 {
     assertValid32x32Rgba8(Image::fromFile(asset("test.webp").c_str()));
+}
+
+TEST(ImageFormats, Hdr)
+{
+    auto img = Image::fromFile(asset("test.hdr").c_str());
+    assertValid32x32Rgba32f(img);
+
+    // Top-left pixel should be (0, 0, 0.5, 1.0)
+    const auto* pixels = static_cast<const float*>(img->getData());
+    EXPECT_FLOAT_EQ(pixels[0], 0.0f);
+    EXPECT_FLOAT_EQ(pixels[1], 0.0f);
+    EXPECT_FLOAT_EQ(pixels[2], 0.5f);
+    EXPECT_FLOAT_EQ(pixels[3], 1.0f);
+
+    // Bottom-right pixel (31,31) -> (31/8, 31/8, 0.5, 1.0)
+    const size_t last = (32u * 32u - 1u) * 4u;
+    EXPECT_FLOAT_EQ(pixels[last + 0], 31.0f / 8.0f);
+    EXPECT_FLOAT_EQ(pixels[last + 1], 31.0f / 8.0f);
+    EXPECT_FLOAT_EQ(pixels[last + 2], 0.5f);
+    EXPECT_FLOAT_EQ(pixels[last + 3], 1.0f);
+}
+
+TEST(ImageFormats, Exr)
+{
+    auto img = Image::fromFile(asset("test.exr").c_str());
+    assertValid32x32Rgba32f(img);
+
+    // Top-left pixel should be (0, 0, 0.5, 1.0)
+    const auto* pixels = static_cast<const float*>(img->getData());
+    EXPECT_FLOAT_EQ(pixels[0], 0.0f);
+    EXPECT_FLOAT_EQ(pixels[1], 0.0f);
+    EXPECT_FLOAT_EQ(pixels[2], 0.5f);
+    EXPECT_FLOAT_EQ(pixels[3], 1.0f);
+
+    // Bottom-right pixel (31,31) -> (31/8, 31/8, 0.5, 1.0)
+    const size_t last = (32u * 32u - 1u) * 4u;
+    EXPECT_FLOAT_EQ(pixels[last + 0], 31.0f / 8.0f);
+    EXPECT_FLOAT_EQ(pixels[last + 1], 31.0f / 8.0f);
+    EXPECT_FLOAT_EQ(pixels[last + 2], 0.5f);
+    EXPECT_FLOAT_EQ(pixels[last + 3], 1.0f);
 }

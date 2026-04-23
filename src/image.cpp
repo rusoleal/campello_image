@@ -1,6 +1,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+#define TINYEXR_IMPLEMENTATION
+#include "tinyexr.h"
+
 #include <webp/decode.h>
 
 #include <campello_image/image.hpp>
@@ -8,11 +11,27 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <limits>
 #include <vector>
 
 namespace systems::leal::campello_image
 {
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+static size_t bytesPerPixel(ImageFormat fmt)
+{
+    switch (fmt)
+    {
+        case ImageFormat::rgba8:   return 4;
+        case ImageFormat::rgba16f: return 8;
+        case ImageFormat::rgba32f: return 16;
+    }
+    return 4; // unreachable
+}
 
 // ---------------------------------------------------------------------------
 // Construction / destruction
@@ -27,10 +46,18 @@ Image::~Image()
 
     auto* data = static_cast<ImageData*>(native);
 
-    if (data->source == PixelSource::stb)
-        stbi_image_free(data->pixels);
-    else
-        WebPFree(data->pixels);
+    switch (data->source)
+    {
+        case PixelSource::stb:
+            stbi_image_free(data->pixels);
+            break;
+        case PixelSource::webp:
+            WebPFree(data->pixels);
+            break;
+        case PixelSource::tinyexr:
+            std::free(data->pixels);
+            break;
+    }
 
     delete data;
 }
@@ -73,6 +100,22 @@ std::shared_ptr<Image> Image::fromFile(const char* path)
 // Factory: fromMemory
 // ---------------------------------------------------------------------------
 
+// Magic-number helpers for format sniffing.
+static bool isHdr(const uint8_t* data, size_t size)
+{
+    // Radiance HDR starts with "#?RADIANCE" or "#?RGBE"
+    return size >= 10 &&
+           (std::memcmp(data, "#?RADIANCE", 10) == 0 ||
+            std::memcmp(data, "#?RGBE", 6) == 0);
+}
+
+static bool isExr(const uint8_t* data, size_t size)
+{
+    // OpenEXR magic: 0x76 0x2f 0x31 0x01
+    return size >= 4 && data[0] == 0x76 && data[1] == 0x2f &&
+           data[2] == 0x31 && data[3] == 0x01;
+}
+
 std::shared_ptr<Image> Image::fromMemory(const uint8_t* data, size_t size)
 {
     if (!data || size == 0)
@@ -85,30 +128,72 @@ std::shared_ptr<Image> Image::fromMemory(const uint8_t* data, size_t size)
 
     int w = 0, h = 0, ch = 0;
 
-    // --- Try stb_image first (JPEG, PNG, BMP, TGA, GIF, …) ----------------
-    uint8_t* pixels = stbi_load_from_memory(
+    // --- HDR (Radiance) — must go before LDR stb_image because stbi_load
+    //     tone-maps HDR files to 8-bit otherwise. ---------------------------
+    if (isHdr(data, size))
+    {
+        float* pixelsf = stbi_loadf_from_memory(
+            data, static_cast<int>(size), &w, &h, &ch, 4 /* force RGBA */);
+
+        if (pixelsf)
+        {
+            auto* handle   = new ImageData{};
+            handle->pixels = pixelsf;
+            handle->width  = static_cast<uint32_t>(w);
+            handle->height = static_cast<uint32_t>(h);
+            handle->format = ImageFormat::rgba32f;
+            handle->source = PixelSource::stb;
+            return std::shared_ptr<Image>(new Image(handle));
+        }
+        return nullptr;
+    }
+
+    // --- OpenEXR — sniffed by magic so we don't waste cycles on stb_image ---
+    if (isExr(data, size))
+    {
+        float* exr_pixels = nullptr;
+        const int ret = LoadEXRFromMemory(
+            &exr_pixels, &w, &h, data, size, nullptr);
+
+        if (ret == TINYEXR_SUCCESS && exr_pixels)
+        {
+            auto* handle   = new ImageData{};
+            handle->pixels = exr_pixels;
+            handle->width  = static_cast<uint32_t>(w);
+            handle->height = static_cast<uint32_t>(h);
+            handle->format = ImageFormat::rgba32f;
+            handle->source = PixelSource::tinyexr;
+            return std::shared_ptr<Image>(new Image(handle));
+        }
+        return nullptr;
+    }
+
+    // --- Try stb_image (JPEG, PNG, BMP, TGA, GIF, …) ------------------------
+    uint8_t* pixels8 = stbi_load_from_memory(
         data, static_cast<int>(size), &w, &h, &ch, 4 /* force RGBA */);
 
-    if (pixels)
+    if (pixels8)
     {
-        auto* handle      = new ImageData{};
-        handle->pixels    = pixels;
-        handle->width     = static_cast<uint32_t>(w);
-        handle->height    = static_cast<uint32_t>(h);
-        handle->source    = PixelSource::stb;
+        auto* handle   = new ImageData{};
+        handle->pixels = pixels8;
+        handle->width  = static_cast<uint32_t>(w);
+        handle->height = static_cast<uint32_t>(h);
+        handle->format = ImageFormat::rgba8;
+        handle->source = PixelSource::stb;
         return std::shared_ptr<Image>(new Image(handle));
     }
 
     // --- Fall back to libwebp -----------------------------------------------
-    pixels = WebPDecodeRGBA(data, size,  &w, &h);
+    pixels8 = WebPDecodeRGBA(data, size, &w, &h);
 
-    if (pixels)
+    if (pixels8)
     {
-        auto* handle      = new ImageData{};
-        handle->pixels    = pixels;
-        handle->width     = static_cast<uint32_t>(w);
-        handle->height    = static_cast<uint32_t>(h);
-        handle->source    = PixelSource::webp;
+        auto* handle   = new ImageData{};
+        handle->pixels = pixels8;
+        handle->width  = static_cast<uint32_t>(w);
+        handle->height = static_cast<uint32_t>(h);
+        handle->format = ImageFormat::rgba8;
+        handle->source = PixelSource::webp;
         return std::shared_ptr<Image>(new Image(handle));
     }
 
@@ -131,10 +216,10 @@ uint32_t Image::getHeight() const
 
 ImageFormat Image::getFormat() const
 {
-    return ImageFormat::rgba8;
+    return static_cast<ImageData*>(native)->format;
 }
 
-const uint8_t* Image::getData() const
+const void* Image::getData() const
 {
     return static_cast<ImageData*>(native)->pixels;
 }
@@ -142,7 +227,7 @@ const uint8_t* Image::getData() const
 size_t Image::getDataSize() const
 {
     auto* d = static_cast<ImageData*>(native);
-    return static_cast<size_t>(d->width) * d->height * 4;
+    return static_cast<size_t>(d->width) * d->height * bytesPerPixel(d->format);
 }
 
 } // namespace systems::leal::campello_image

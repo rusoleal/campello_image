@@ -1,6 +1,6 @@
 # campello_image
 
-A cross-platform C++20 image loading library. Decodes JPEG, PNG, BMP, TGA, GIF, and WebP from files or memory buffers, always returning raw RGBA8 pixel data ready for direct GPU texture upload.
+A cross-platform C++20 image loading library. Decodes JPEG, PNG, BMP, TGA, GIF, WebP, HDR, and OpenEXR from files or memory buffers. LDR formats decode to RGBA8; HDR formats decode to RGBA32F.
 
 Designed as a companion to [campello_gpu](https://github.com/rusoleal/campello_gpu) — no dependency on it.
 
@@ -15,14 +15,16 @@ Each module is designed to work standalone, but integrates seamlessly into the e
 
 ## Supported formats
 
-| Format | Decoder |
-|--------|---------|
-| JPEG   | stb_image (vendored) |
-| PNG    | stb_image (vendored) |
-| BMP    | stb_image (vendored) |
-| TGA    | stb_image (vendored) |
-| GIF    | stb_image (vendored, first frame only) |
-| WebP   | libwebp v1.6.0 |
+| Format | Decoder | Output format |
+|--------|---------|---------------|
+| JPEG   | stb_image (vendored) | RGBA8 |
+| PNG    | stb_image (vendored) | RGBA8 |
+| BMP    | stb_image (vendored) | RGBA8 |
+| TGA    | stb_image (vendored) | RGBA8 |
+| GIF    | stb_image (vendored, first frame only) | RGBA8 |
+| WebP   | libwebp v1.6.0 | RGBA8 |
+| HDR    | stb_image (vendored) | RGBA32F |
+| OpenEXR| tinyexr v1.0.0 (vendored) | RGBA32F |
 
 ## Platforms
 
@@ -46,7 +48,7 @@ cmake -B build
 make -C build
 ```
 
-CMake fetches libwebp automatically via `FetchContent`. stb_image is vendored in `src/stb_image.h`.
+CMake fetches libwebp automatically via `FetchContent`. stb_image and tinyexr are vendored in `src/`.
 
 ## Tests
 
@@ -74,10 +76,19 @@ using namespace systems::leal::campello_image;
 // Load from file
 auto img = Image::fromFile("texture.png");
 if (img) {
-    uint32_t       w    = img->getWidth();
-    uint32_t       h    = img->getHeight();
-    const uint8_t* data = img->getData();     // RGBA8, w * h * 4 bytes
-    size_t         size = img->getDataSize(); // w * h * 4
+    uint32_t      w = img->getWidth();
+    uint32_t      h = img->getHeight();
+    ImageFormat   fmt = img->getFormat();
+    const void*   data = img->getData();
+    size_t        size = img->getDataSize();
+
+    if (fmt == ImageFormat::rgba8) {
+        const uint8_t* pixels = static_cast<const uint8_t*>(data);
+        // 4 bytes per pixel
+    } else if (fmt == ImageFormat::rgba32f) {
+        const float* pixels = static_cast<const float*>(data);
+        // 16 bytes per pixel
+    }
 }
 
 // Load from memory (e.g. from an asset bundle or network buffer)
@@ -114,7 +125,7 @@ include(FetchContent)
 FetchContent_Declare(
     campello_image
     GIT_REPOSITORY https://github.com/rusoleal/campello_image.git
-    GIT_TAG        v0.1.0
+    GIT_TAG        v0.4.0
 )
 FetchContent_MakeAvailable(campello_image)
 

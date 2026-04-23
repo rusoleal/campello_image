@@ -10,14 +10,21 @@ namespace systems::leal::campello_image
     /**
      * @brief A decoded CPU-side image.
      *
-     * Holds raw RGBA8 pixel data decoded from a file or memory buffer.
-     * Supported source formats: JPEG, PNG, BMP, TGA, GIF (via stb_image)
-     * and WebP (via libwebp). For animated GIF files only the first frame
-     * is decoded; subsequent frames are ignored.
+     * Holds raw pixel data decoded from a file or memory buffer.
+     * Supported source formats: JPEG, PNG, BMP, TGA, GIF (via stb_image),
+     * WebP (via libwebp), HDR (via stb_image), and OpenEXR (via tinyexr).
+     * For animated GIF files only the first frame is decoded; subsequent
+     * frames are ignored.
      *
-     * The pixel data is always RGBA8 — 4 bytes per pixel, regardless of the
-     * source file's original channel count. This makes it safe to upload
-     * directly to a GPU texture without any additional conversion.
+     * The pixel format depends on the source file:
+     * - LDR formats (JPEG, PNG, BMP, TGA, GIF, WebP) decode to RGBA8.
+     * - HDR formats (Radiance HDR, OpenEXR) decode to RGBA32F.
+     *
+     * Use `getFormat()` to determine the pixel format and cast `getData()`
+     * appropriately:
+     * - `ImageFormat::rgba8`   → `const uint8_t*`  (4 bytes per pixel)
+     * - `ImageFormat::rgba16f` → `const uint16_t*` (8 bytes per pixel)
+     * - `ImageFormat::rgba32f` → `const float*`    (16 bytes per pixel)
      *
      * Images are created via the static factory methods `fromFile` and
      * `fromMemory`. Both return `nullptr` on failure.
@@ -44,7 +51,7 @@ namespace systems::leal::campello_image
         /**
          * @brief Decodes an image from a file path.
          *
-         * Reads the file at `path` and decodes it to RGBA8. Returns `nullptr`
+         * Reads the file at `path` and decodes it. Returns `nullptr`
          * if the path is null, the file cannot be opened, or the format is
          * not recognised.
          *
@@ -78,23 +85,23 @@ namespace systems::leal::campello_image
 
         /**
          * @brief Returns the pixel format of the decoded data.
-         *
-         * Always returns `ImageFormat::rgba8`.
          */
         ImageFormat getFormat() const;
 
         /**
-         * @brief Returns a pointer to the raw RGBA8 pixel data.
+         * @brief Returns a pointer to the raw pixel data.
          *
          * The buffer is `getDataSize()` bytes long and is valid for the
-         * lifetime of this Image object.
+         * lifetime of this Image object. The actual type depends on
+         * `getFormat()`; see the `Image` class documentation for casting
+         * guidelines.
          */
-        const uint8_t* getData() const;
+        const void* getData() const;
 
         /**
          * @brief Returns the size of the pixel data buffer in bytes.
          *
-         * Equivalent to `getWidth() * getHeight() * 4`.
+         * Equivalent to `getWidth() * getHeight() * bytesPerPixel(format)`.
          */
         size_t getDataSize() const;
 
