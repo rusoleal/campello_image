@@ -6,6 +6,10 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     WINDOWS_EXPORT_ALL_SYMBOLS ON
 )
 
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    NOMINMAX
+)
+
 target_include_directories(${PROJECT_NAME} PUBLIC
     "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>"
     "${PROJECT_BINARY_DIR}"
