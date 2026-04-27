@@ -33,6 +33,9 @@ All notable changes to campello_image are documented here.
   - Out-of-range mip level safety
 - Vendored test assets: `tests/images/test.basis` and `tests/images/test.ktx2` (8×8 RGBA with 4 mip levels, encoded with basisu)
 
+### Build
+- **CMake 4.0 compatibility** — set `CMAKE_POLICY_VERSION_MINIMUM=3.5` before `FetchContent_MakeAvailable(basis_universal)` to work around `basis_universal` 1.16.4's `cmake_minimum_required(VERSION 2.8)`
+
 ## [0.4.0] - 2026-04-23
 
 ### Added

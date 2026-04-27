@@ -24,6 +24,9 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/BinomialLLC/basis_universal.git
     GIT_TAG        1.16.4
 )
+# basis_universal 1.16.4 declares cmake_minimum_required(VERSION 2.8), which
+# CMake 4.0+ no longer supports. Tell CMake to floor old requirements to 3.5.
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 FetchContent_MakeAvailable(basis_universal)
 
 # Exclude the basisu tool from the default build — we only need the transcoder.
