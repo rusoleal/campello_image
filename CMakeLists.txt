@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22.1)
 
-project(campello_image VERSION 0.4.0)
+project(campello_image VERSION 0.5.0)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -17,6 +17,19 @@ configure_file(src/campello_image_config.h.in campello_image_config.h)
 # ---------------------------------------------------------------------------
 
 include(FetchContent)
+
+# basis_universal — Basis Universal + KTX2 transcoding
+FetchContent_Declare(
+    basis_universal
+    GIT_REPOSITORY https://github.com/BinomialLLC/basis_universal.git
+    GIT_TAG        1.16.4
+)
+FetchContent_MakeAvailable(basis_universal)
+
+# Exclude the basisu tool from the default build — we only need the transcoder.
+if(TARGET basisu)
+    set_target_properties(basisu PROPERTIES EXCLUDE_FROM_ALL TRUE)
+endif()
 
 # libwebp — WebP decoding
 set(WEBP_BUILD_ANIM_UTILS OFF CACHE BOOL "" FORCE)

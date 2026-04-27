@@ -2,6 +2,37 @@
 
 All notable changes to campello_image are documented here.
 
+## [Unreleased]
+
+## [0.5.0] - 2026-04-27
+
+### Added
+
+- **Basis Universal + KTX2 transcoding** — `TextureData` class for GPU-ready block-compressed texture data
+  - `TextureData::fromFile(path, targetFormat)` and `TextureData::fromMemory(data, size, targetFormat)` — auto-detect Basis (.basis), KTX2 (.ktx2), and uncompressed image formats
+  - **Supported transcoding targets**: RGBA8, BC1, BC3, BC4, BC5, BC7, ETC2_RGB8, EAC_R11, EAC_RG11, ASTC_4x4
+  - **Basis Universal transcoder** — fetched via CMake `FetchContent` (BinomialLLC/basis_universal @ 1.16.4)
+  - **KTX2 parser** — built on basis_universal's `ktx2_transcoder`; supports ETC1S and UASTC payloads with Zstd supercompression
+  - **Mip level support** — all mip levels from the source file are transcoded and accessible via `getData(mipLevel)` / `getDataSize(mipLevel)`
+  - **Block info helpers** — `getBlockWidth()`, `getBlockHeight()`, `getBlockBytes()`, `isCompressed()` for computing GPU upload parameters
+- **`TextureFormat` enum** — campello_image's own format enum (no dependency on campello_gpu); values map 1:1 to campello_gpu's `PixelFormat` for zero-cost casting when both libraries are used together
+  - Block helpers: `getTextureFormatBlockBytes()`, `getTextureFormatBlockWidth()`, `getTextureFormatBlockHeight()`, `isTextureFormatCompressed()`
+- **Uncompressed image fallback** — PNG, JPEG, WebP, HDR, EXR files loaded through `TextureData` decode to RGBA8 via the existing `Image` pipeline
+- **GPU format bridge** — `inc/campello_image/gpu_format_bridge.hpp` provides `textureFormatToPixelFormat()` and `pixelFormatToTextureFormat()` conversions
+  - Guarded by `__has_include(<campello_gpu/constants/pixel_format.hpp>)` so campello_image stays standalone when campello_gpu is absent
+  - `TextureFormat` uses explicit underlying values that match `campello_gpu::PixelFormat` for zero-cost casting: `static_cast<PixelFormat>(static_cast<uint32_t>(TextureFormat::bc7_rgba_unorm))`
+
+### Tests
+
+- 17 new `TextureData` universal tests:
+  - Basis → RGBA8, BC1, BC7, ETC2, ASTC_4x4 transcoding
+  - KTX2 → RGBA8, BC7, ASTC_4x4 transcoding
+  - Uncompressed PNG → RGBA8 fallback
+  - Null/invalid input rejection
+  - Unsupported format rejection (e.g., BC6H from Basis)
+  - Out-of-range mip level safety
+- Vendored test assets: `tests/images/test.basis` and `tests/images/test.ktx2` (8×8 RGBA with 4 mip levels, encoded with basisu)
+
 ## [0.4.0] - 2026-04-23
 
 ### Added

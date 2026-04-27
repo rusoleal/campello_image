@@ -39,23 +39,39 @@ The same pattern as campello_gpu is used. The public `Image` class holds a `void
 
 ### Decoding Strategy
 
+#### `Image` (uncompressed)
+
 `Image::fromMemory` tries decoders in order:
 
-1. **stb_image** — handles JPEG, PNG, BMP, TGA, GIF (first frame only). Vendored at `src/stb_image.h`. Always requests 4 channels (RGBA8).
-2. **libwebp** (`webpdecoder` target, decoder-only) — fallback for WebP. Fetched via CMake `FetchContent` at tag `v1.5.0`.
+1. **stb_image** — handles JPEG, PNG, BMP, TGA, GIF (first frame only), HDR. Vendored at `src/stb_image.h`.
+2. **tinyexr** — handles OpenEXR. Vendored at `src/tinyexr.h`.
+3. **libwebp** (`webpdecoder` target, decoder-only) — fallback for WebP. Fetched via CMake `FetchContent` at tag `v1.6.0`.
 
 `Image::fromFile` reads the file into memory and delegates to `fromMemory`.
 
-Output is always **RGBA8** — 4 bytes per pixel, regardless of the source file's channel count.
+Output format depends on source: LDR → RGBA8, HDR → RGBA32F.
+
+#### `TextureData` (compressed + mipmapped)
+
+`TextureData::fromMemory` detects format by magic bytes and transcodes:
+
+1. **KTX2** — Khronos KTX2 container with Basis Universal payload (ETC1S or UASTC). Parsed and transcoded via basis_universal's `ktx2_transcoder`.
+2. **Basis Universal** — `.basis` files. Transcoded via basis_universal's `basisu_transcoder`.
+3. **Uncompressed images** — PNG, JPEG, WebP, HDR, EXR. Delegates to `Image::fromMemory`, then wraps the RGBA8 pixels. Only `TextureFormat::rgba8` is supported for this fallback.
+
+The caller selects the target GPU format (BC7, ETC2, ASTC, RGBA8, etc.) and the library transcodes all mip levels automatically.
 
 ### Key Types
 
 | Type | Location | Role |
 |------|----------|------|
-| `Image` | `inc/campello_image/image.hpp` | Public API — factory + getters |
-| `ImageFormat` | `inc/campello_image/constants/image_format.hpp` | Enum (`rgba8`) |
-| `ImageData` | `src/image_handle.hpp` | Internal handle — pixels, width, height, PixelSource |
-| `PixelSource` | `src/image_handle.hpp` | Tracks allocator (`stb` vs `webp`) for correct free in destructor |
+| `Image` | `inc/campello_image/image.hpp` | Public API — decoded CPU-side image (RGBA8 / RGBA32F) |
+| `TextureData` | `inc/campello_image/texture_data.hpp` | Public API — GPU-ready block-compressed or uncompressed texture data with mips |
+| `ImageFormat` | `inc/campello_image/constants/image_format.hpp` | Enum (`rgba8`, `rgba16f`, `rgba32f`) |
+| `TextureFormat` | `inc/campello_image/constants/texture_format.hpp` | Enum of GPU formats (BC, ETC2, ASTC, RGBA8, etc.) |
+| `ImageData` | `src/image_handle.hpp` | Internal handle for `Image` |
+| `TextureDataHandle` | `src/texture_data_handle.hpp` | Internal handle for `TextureData` — mips, format, dimensions |
+| `PixelSource` | `src/image_handle.hpp` | Tracks allocator (`stb` vs `webp` vs `tinyexr`) for correct free in destructor |
 
 ### Memory Management
 
@@ -70,7 +86,9 @@ Output is always **RGBA8** — 4 bytes per pixel, regardless of the source file'
 | Dependency | How managed | Notes |
 |------------|-------------|-------|
 | stb_image | Vendored at `src/stb_image.h` | Header-only; `STB_IMAGE_IMPLEMENTATION` defined in `image.cpp` |
-| libwebp | CMake `FetchContent`, tag `v1.5.0` | Links `webpdecoder` only (no encoder) |
+| tinyexr | Vendored at `src/tinyexr.h` | Header-only; `TINYEXR_IMPLEMENTATION` defined in `image.cpp` |
+| libwebp | CMake `FetchContent`, tag `v1.6.0` | Links `webpdecoder` only (no encoder) |
+| basis_universal | CMake `FetchContent`, tag `1.16.4` | Transcoder only (`basisu_transcoder.cpp` + `zstd.c`); encoder tool excluded from build |
 | googletest | CMake `FetchContent`, tag `v1.17.0` | Test builds only |
 
 ### Tests
