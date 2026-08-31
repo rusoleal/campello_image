@@ -42,9 +42,35 @@ static bool textureFormatToBasisFormat(TextureFormat fmt,
         case TextureFormat::bc5_rg_unorm:    out = basist::transcoder_texture_format::cTFBC5_RG;       break;
         case TextureFormat::bc7_rgba_unorm:  out = basist::transcoder_texture_format::cTFBC7_RGBA;     break;
         case TextureFormat::etc2_rgb8unorm:  out = basist::transcoder_texture_format::cTFETC1_RGB;     break;
+        // etc2_rgb8a1unorm (punch-through, 1-bit alpha, 8 bytes/block --
+        // see texture_format.cpp's own block-size table) has no matching
+        // basist transcode target: cTFETC2_RGBA is a DIFFERENT, 16-byte
+        // format (its own doc comment: "ETC2_EAC_A8 block followed by an
+        // ETC1 block" -- full 8-bit alpha, not punch-through). Mapping the
+        // two together was tried and reverted after catching the block-
+        // size mismatch it would silently produce (getBlockBytes() would
+        // report 8 while the transcoder actually wrote 16 per block) --
+        // stays unsupported (falls through to `default` below) until/
+        // unless a real punch-through-alpha transcode target exists here.
         case TextureFormat::eac_r11unorm:    out = basist::transcoder_texture_format::cTFETC2_EAC_R11; break;
         case TextureFormat::eac_rg11unorm:   out = basist::transcoder_texture_format::cTFETC2_EAC_RG11;break;
         case TextureFormat::astc_4x4_unorm:  out = basist::transcoder_texture_format::cTFASTC_4x4_RGBA;break;
+        // bc6h_rgb_ufloat: basist::cTFBC6H exists (added v2_0) and its
+        // numeric value aligns with campello_gpu::PixelFormat::bc6h_rgb_ufloat
+        // (151), but it is NOT safe to map unconditionally here. Tried and
+        // reverted: cTFBC6H is only handled by the UASTC-HDR low-level
+        // transcoder. The ETC1S (SDR/.basis) low-level transcoder's
+        // transcode_image() switch has no case for it at all and falls to
+        // `default: assert(0)` -- a hard crash, not a graceful failure --
+        // confirmed directly by TextureDataBasis.UnsupportedFormatReturnsNullptr
+        // (which specifically exercises bc6h_rgb_ufloat against an SDR
+        // test.basis asset as its "known-unsupported" case; mapping this
+        // turned that test's graceful nullptr into an assertion failure).
+        // fromFile()/fromMemory() have no source-format (HDR vs LDR)
+        // detection today to gate on before dispatching to this target, and
+        // there's no local UASTC-HDR test asset to validate the intended
+        // happy path either. Needs real HDR-detection work first, not a
+        // one-line mapping -- stays unsupported (falls to `default` below).
         default:
             return false; // unsupported for Basis transcoding
     }

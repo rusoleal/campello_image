@@ -32,8 +32,12 @@ Each module is designed to work standalone, but integrates seamlessly into the e
 
 | Format | Transcoder | Output formats |
 |--------|-----------|----------------|
-| Basis Universal (`.basis`) | basis_universal v1.16.4 | BC1–BC7, ETC2, EAC, ASTC_4x4, RGBA8 |
-| Khronos KTX2 (`.ktx2`) | basis_universal v1.16.4 | BC1–BC7, ETC2, EAC, ASTC_4x4, RGBA8 |
+| Basis Universal (`.basis`) | basis_universal v2_50 | BC1, BC3, BC4, BC5, BC7, ETC2, EAC, ASTC_4x4, RGBA8 |
+| Khronos KTX2 (`.ktx2`) | basis_universal v2_50 | BC1, BC3, BC4, BC5, BC7, ETC2, EAC, ASTC_4x4, RGBA8 |
+
+Not supported: BC2, BC6H (HDR), ASTC HDR, `etc2_rgb8a1unorm` (punch-through alpha) — none of these
+have a valid transcode target in basis_universal for this library's usage pattern; see
+`CHANGELOG.md` and `src/texture_data.cpp` for details.
 
 ## Platforms
 

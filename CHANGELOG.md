@@ -4,6 +4,53 @@ All notable changes to campello_image are documented here.
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-08-31
+
+### Changed
+
+- **basis_universal upgraded from `1.16.4` to `v2_50`** — the 1.x line has no HDR transcode
+  targets at all (no BC6H, no ASTC HDR); real HDR support (UASTC HDR → BC6H/ASTC HDR/RGB9E5) was
+  added starting `v2_0` and refined through `v2_50`. `v1.6`'s own release notes also describe a
+  transcoder-initialization bug specific to "apps that only used the transcoder module" — exactly
+  this library's usage pattern — fixed in `v2_0`, a real correctness fix independent of HDR.
+  Compiled source paths (`transcoder/basisu_transcoder.cpp`, `zstd/zstd.c`) are unchanged; full
+  test suite passes clean against the new version with no code changes required for the upgrade
+  itself.
+
+### Fixed
+
+- **Build**: `basisu_encoder` and the `example`/`example_capi`/`example_transcoding` targets from
+  basis_universal's own `CMakeLists.txt` are now excluded from `ALL` (`CMakeLists.txt`). Under
+  `v2_50`, `basisu_encoder` doesn't compile cleanly with this project's `CMAKE_UNITY_BUILD ON` once
+  it propagates into the fetched subdirectory — namespace ambiguities between `basist::color_rgba`
+  and `basisu::color_rgba` across unity translation units. None of these targets were ever linked
+  into campello_image (transcoder-only by design), so excluding them is free.
+
+### Documented (no behavior change)
+
+- **`TextureFormat::etc2_rgb8a1unorm` has no valid Basis transcode target and never will with this
+  library.** Investigated adding a mapping to `basist::cTFETC2_RGBA` — that format is a different,
+  16-byte-per-block full-8-bit-alpha layout, not the 8-byte punch-through-alpha layout
+  `etc2_rgb8a1unorm` actually is (per its own block-size table in `constants/texture_format.cpp`).
+  No punch-through-alpha transcode target exists anywhere in basis_universal's transcoder. Stays
+  unsupported; `src/texture_data.cpp` now documents why in place, so this isn't re-attempted
+  without re-discovering the same block-size mismatch.
+- **`TextureFormat::bc6h_rgb_ufloat` is not safely mappable to `basist::cTFBC6H` without
+  source-format detection this library doesn't have.** `cTFBC6H` exists in `v2_50` and its numeric
+  value does align with `campello_gpu::PixelFormat::bc6h_rgb_ufloat` (151), but it's only handled by
+  the UASTC-HDR low-level transcoder — the ETC1S (SDR/`.basis`) transcoder's `transcode_image()` has
+  no case for it and hits `assert(0)`, a hard crash rather than a graceful failure. Confirmed
+  directly: mapping it turned the existing `TextureDataBasis.UnsupportedFormatReturnsNullptr` test
+  (which uses `bc6h_rgb_ufloat` against an SDR asset as its known-safe-to-fail case) into a crash.
+  `fromFile()`/`fromMemory()` have no HDR-vs-LDR source detection to gate on before dispatching to
+  this target, and there's no local UASTC-HDR test asset to validate the intended happy path
+  either — real follow-up work, not a one-line mapping. Stays unsupported, documented in place.
+
+### Tests
+
+- No new tests added this release — existing 33-test universal suite re-validated clean against
+  `v2_50` (all three investigations above were caught/confirmed by tests already in the suite).
+
 ## [0.5.0] - 2026-04-27
 
 ### Added

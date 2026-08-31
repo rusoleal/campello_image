@@ -61,6 +61,12 @@ Output format depends on source: LDR → RGBA8, HDR → RGBA32F.
 
 The caller selects the target GPU format (BC7, ETC2, ASTC, RGBA8, etc.) and the library transcodes all mip levels automatically.
 
+Not every `TextureFormat` value is a valid transcode target: `etc2_rgb8a1unorm` (no matching
+basis_universal transcode target exists) and `bc6h_rgb_ufloat` (only valid from a UASTC-HDR
+source; this library has no HDR-vs-LDR source detection to gate on it) both fall through to the
+`default: return false` case in `textureFormatToBasisFormat()` (`src/texture_data.cpp`) — see the
+comments there before attempting to "fix" either.
+
 ### Key Types
 
 | Type | Location | Role |
@@ -88,7 +94,7 @@ The caller selects the target GPU format (BC7, ETC2, ASTC, RGBA8, etc.) and the 
 | stb_image | Vendored at `src/stb_image.h` | Header-only; `STB_IMAGE_IMPLEMENTATION` defined in `image.cpp` |
 | tinyexr | Vendored at `src/tinyexr.h` | Header-only; `TINYEXR_IMPLEMENTATION` defined in `image.cpp` |
 | libwebp | CMake `FetchContent`, tag `v1.6.0` | Links `webpdecoder` only (no encoder) |
-| basis_universal | CMake `FetchContent`, tag `1.16.4` | Transcoder only (`basisu_transcoder.cpp` + `zstd.c`); encoder tool excluded from build |
+| basis_universal | CMake `FetchContent`, tag `v2_50` | Transcoder only (`basisu_transcoder.cpp` + `zstd.c`); `basisu`, `basisu_encoder`, and the `example*` targets are all `EXCLUDE_FROM_ALL` in `CMakeLists.txt` — never linked, and `basisu_encoder` doesn't build clean under this project's unity build |
 | googletest | CMake `FetchContent`, tag `v1.17.0` | Test builds only |
 
 ### Tests
