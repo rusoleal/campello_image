@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22.1)
 
-project(campello_image VERSION 0.5.1)
+project(campello_image VERSION 0.5.2)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -93,7 +93,7 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
     include(macos.cmake)
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "iOS")
     include(ios.cmake)
-elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Windows" OR ${CMAKE_SYSTEM_NAME} STREQUAL "WindowsStore")
     include(windows.cmake)
 else()
     include(linux.cmake)

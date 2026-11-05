@@ -4,6 +4,13 @@ All notable changes to campello_image are documented here.
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-11-05
+
+### Fixed
+
+- **UWP builds (`CMAKE_SYSTEM_NAME=WindowsStore`) used the Linux build settings**, so MSVC produced no
+  import library and consumers failed to link. They now use `windows.cmake`.
+
 ## [0.5.1] - 2026-08-31
 
 ### Changed
