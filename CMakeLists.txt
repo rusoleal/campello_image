@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22.1)
 
-project(campello_image VERSION 0.5.2)
+project(campello_image VERSION 0.6.0)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -35,6 +35,13 @@ FetchContent_Declare(
 # basis_universal declares cmake_minimum_required(VERSION 2.8) (still true as
 # of v2_50), which CMake 4.0+ no longer supports. Floor old requirements to 3.5.
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+# basis_universal turns SSE on for every MSVC build (its option defaults to
+# TRUE there), x86 or not; on ARM64 that includes <xmmintrin.h>, which
+# doesn't compile. SSE only on x86.
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(ARM|arm|aarch64)" OR CMAKE_VS_PLATFORM_NAME MATCHES "ARM"
+   OR CMAKE_GENERATOR_PLATFORM MATCHES "ARM")
+    set(BASISU_SSE OFF CACHE BOOL "basis_universal SSE 4.1 (x86 only)" FORCE)
+endif()
 FetchContent_MakeAvailable(basis_universal)
 
 # Exclude everything from basis_universal's own CMakeLists.txt except the
@@ -46,6 +53,7 @@ FetchContent_MakeAvailable(basis_universal)
 # ambiguities across unity translation units) -- excluding it from ALL avoids
 # building code we never link against anyway.
 foreach(_campello_image_unused_basisu_target IN ITEMS basisu basisu_encoder example example_capi example_transcoding)
+    # (basisu_encoder is built after all when CAMPELLO_IMAGE_ENCODER is on: see below.)
     if(TARGET ${_campello_image_unused_basisu_target})
         set_target_properties(${_campello_image_unused_basisu_target} PROPERTIES EXCLUDE_FROM_ALL TRUE)
     endif()
@@ -97,6 +105,29 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Windows" OR ${CMAKE_SYSTEM_NAME} STREQUAL 
     include(windows.cmake)
 else()
     include(linux.cmake)
+endif()
+
+# ---------------------------------------------------------------------------
+# KTX2 encoding (texture_encoder.hpp): the Basis Universal encoder
+#
+# basisu_encoder carries its own copy of the transcoder and zstd, so with it
+# campello_image drops its own (one copy of each symbol). It builds without
+# the unity build (the ambiguities noted above), as position-independent code
+# (campello_image is a shared library). Off: encodeKtx2() returns nothing.
+# ---------------------------------------------------------------------------
+option(CAMPELLO_IMAGE_ENCODER "KTX2 (UASTC) encoding with the Basis Universal encoder" ON)
+target_sources(${PROJECT_NAME} PRIVATE src/texture_encoder.cpp)
+set_source_files_properties(src/texture_encoder.cpp PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
+if(CAMPELLO_IMAGE_ENCODER AND TARGET basisu_encoder)
+    set_target_properties(basisu_encoder PROPERTIES EXCLUDE_FROM_ALL FALSE UNITY_BUILD OFF POSITION_INDEPENDENT_CODE ON)
+    get_target_property(_campello_image_sources ${PROJECT_NAME} SOURCES)
+    list(REMOVE_ITEM _campello_image_sources
+        ${basis_universal_SOURCE_DIR}/transcoder/basisu_transcoder.cpp
+        ${basis_universal_SOURCE_DIR}/zstd/zstd.c)
+    set_target_properties(${PROJECT_NAME} PROPERTIES SOURCES "${_campello_image_sources}")
+    target_include_directories(${PROJECT_NAME} PRIVATE ${basis_universal_SOURCE_DIR}/encoder)
+    target_link_libraries(${PROJECT_NAME} basisu_encoder)  # plain signature, as the platform files
+    target_compile_definitions(${PROJECT_NAME} PRIVATE CAMPELLO_IMAGE_ENCODER=1)
 endif()
 
 # ---------------------------------------------------------------------------
