@@ -56,7 +56,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
-basis_universal (v2_50) — transcoder module only (basisu_transcoder.cpp)
+basis_universal (v2_50) — transcoder, and the encoder when CAMPELLO_IMAGE_ENCODER is on (default)
 https://github.com/BinomialLLC/basis_universal
 --------------------------------------------------------------------------------
 Copyright 2019-2026 Binomial LLC

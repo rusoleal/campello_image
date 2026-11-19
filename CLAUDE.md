@@ -76,6 +76,7 @@ comments there before attempting to "fix" either.
 | `ImageFormat` | `inc/campello_image/constants/image_format.hpp` | Enum (`rgba8`, `rgba16f`, `rgba32f`) |
 | `TextureFormat` | `inc/campello_image/constants/texture_format.hpp` | Enum of GPU formats (BC, ETC2, ASTC, RGBA8, etc.) |
 | `ImageData` | `src/image_handle.hpp` | Internal handle for `Image` |
+| `encodeKtx2()` / `compressRGBA8()` | `inc/campello_image/texture_encoder.hpp`, `src/texture_encoder.cpp` | KTX2 (UASTC) encoding with basis_universal's encoder (`basisu_encoder` target, linked when `CAMPELLO_IMAGE_ENCODER` is on). That target has its own transcoder and zstd, so `CMakeLists.txt` removes the platform files' copies. `texture_encoder.cpp` stays out of the unity build. |
 | `TextureDataHandle` | `src/texture_data_handle.hpp` | Internal handle for `TextureData` — mips, format, dimensions |
 | `PixelSource` | `src/image_handle.hpp` | Tracks allocator (`stb` vs `webp` vs `tinyexr`) for correct free in destructor |
 

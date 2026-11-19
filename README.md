@@ -39,6 +39,18 @@ Not supported: BC2, BC6H (HDR), ASTC HDR, `etc2_rgb8a1unorm` (punch-through alph
 have a valid transcode target in basis_universal for this library's usage pattern; see
 `CHANGELOG.md` and `src/texture_data.cpp` for details.
 
+### Encoding (KTX2)
+
+`encodeKtx2()` compresses RGBA8 pixels into a KTX2 file (UASTC, Zstd supercompressed, with mips), and `compressRGBA8()` goes straight to GPU-ready data (BC7, ASTC 4x4, ETC2...). Both use basis_universal's encoder (`CAMPELLO_IMAGE_ENCODER`, on by default):
+
+```cpp
+#include <campello_image/texture_encoder.hpp>
+
+EncodeOptions options;                 // sRGB colour, wrapped mips, effort 1
+auto texture = compressRGBA8(pixels, 512, 512, TextureFormat::bc7_rgba_unorm, options);
+auto file    = encodeKtx2(pixels, 512, 512, options);   // to store or cache
+```
+
 ## Platforms
 
 | Platform | Status |
