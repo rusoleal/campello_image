@@ -35,6 +35,13 @@ FetchContent_Declare(
 # basis_universal declares cmake_minimum_required(VERSION 2.8) (still true as
 # of v2_50), which CMake 4.0+ no longer supports. Floor old requirements to 3.5.
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+# basis_universal turns SSE on for every MSVC build (its option defaults to
+# TRUE there), x86 or not; on ARM64 that includes <xmmintrin.h>, which
+# doesn't compile. SSE only on x86.
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(ARM|arm|aarch64)" OR CMAKE_VS_PLATFORM_NAME MATCHES "ARM"
+   OR CMAKE_GENERATOR_PLATFORM MATCHES "ARM")
+    set(BASISU_SSE OFF CACHE BOOL "basis_universal SSE 4.1 (x86 only)" FORCE)
+endif()
 FetchContent_MakeAvailable(basis_universal)
 
 # Exclude everything from basis_universal's own CMakeLists.txt except the

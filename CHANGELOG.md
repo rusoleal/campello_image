@@ -14,6 +14,7 @@ All notable changes to campello_image are documented here.
   - **Options** (`EncodeOptions`): sRGB or linear data (normal maps), mips wrapped (tiled textures) or clamped, effort 0..4, threads.
   - Built from basis_universal's encoder (`CAMPELLO_IMAGE_ENCODER`, on by default). It brings its own transcoder and zstd, so campello_image no longer compiles its own copies; it builds outside the unity build. `canEncode()` says whether a build can encode.
   - **Encode time**, 512x512 with mips, worst-case noise, on a 6-core Intel Mac: 86 ms at effort 0 on all threads (310 ms on one), 196 ms at effort 1. Transcoding to BC7 takes about 6 ms.
+  - basis_universal's SSE is turned off on ARM (its CMake enables it for every MSVC build, which broke Windows on ARM64).
   - 4 new tests: KTX2 with mips and a faithful round trip (PSNR above 35 dB); BC7, ASTC 4x4 and ETC block sizes; linear data without mips; empty input.
 
 ## [0.5.2] - 2026-11-05
