@@ -5,6 +5,9 @@
 // basisu_transcoder.h in one translation unit give ambiguous names.
 #if CAMPELLO_IMAGE_ENCODER
 #include "basisu_comp.h"
+// Declarations only: basisu_encoder compiles miniz (in basisu_comp.cpp).
+#define MINIZ_HEADER_FILE_ONLY
+#include "basisu_miniz.h"
 #endif
 
 #include <mutex>
@@ -64,6 +67,26 @@ std::shared_ptr<TextureData> compressRGBA8(const uint8_t* rgba, uint32_t width, 
     if (ktx2.empty())
         return nullptr;
     return TextureData::fromMemory(ktx2.data(), ktx2.size(), targetFormat);
+}
+
+std::vector<uint8_t> encodePng(const uint8_t* rgba, uint32_t width, uint32_t height, int level)
+{
+#if CAMPELLO_IMAGE_ENCODER
+    if (!rgba || width == 0 || height == 0 || width > 0x7fffffffu || height > 0x7fffffffu)
+        return {};
+    size_t length = 0;
+    const int clamped = level < 0 ? 0 : level > 10 ? 10 : level;
+    void* png = buminiz::tdefl_write_image_to_png_file_in_memory_ex(rgba, (int)width, (int)height, 4, &length,
+                                                                     (buminiz::mz_uint)clamped, false);
+    if (!png)
+        return {};
+    std::vector<uint8_t> out(static_cast<const uint8_t*>(png), static_cast<const uint8_t*>(png) + length);
+    buminiz::mz_free(png);
+    return out;
+#else
+    (void)rgba; (void)width; (void)height; (void)level;
+    return {};
+#endif
 }
 
 }
