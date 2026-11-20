@@ -4,6 +4,8 @@ All notable changes to campello_image are documented here.
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-20
+
 ### Changed
 - **WebAssembly builds use SIMD** (`-msimd128`), on by default: every browser with WebGPU supports it. The option `CAMPELLO_IMAGE_WASM_SIMD` turns it off. It applies to the library and the codecs it builds (Basis Universal, libwebp and the others) and is passed on to consumers (compile and link, so wasm-opt accepts the SIMD instructions).
 
