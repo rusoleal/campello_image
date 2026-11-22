@@ -58,4 +58,14 @@ namespace systems::leal::campello_image
      */
     std::shared_ptr<TextureData> compressRGBA8(const uint8_t* rgba, uint32_t width, uint32_t height,
                                                TextureFormat targetFormat, const EncodeOptions& options = {});
+
+    /**
+     * @brief Encodes RGBA8 pixels (rows top to bottom, 4 bytes per texel) as
+     * a PNG file (8-bit RGBA, deflate), e.g. a glTF exporter's images.
+     * `level` is the deflate effort, 0 (stored) to 10; 6 is the usual one.
+     *
+     * @return The file's bytes, or empty on failure (or when canEncode() is
+     * false: it uses the Basis Universal encoder's deflate).
+     */
+    std::vector<uint8_t> encodePng(const uint8_t* rgba, uint32_t width, uint32_t height, int level = 6);
 }

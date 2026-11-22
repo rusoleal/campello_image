@@ -1,3 +1,4 @@
+#include <campello_image/image.hpp>
 #include <campello_image/texture_data.hpp>
 #include <campello_image/texture_encoder.hpp>
 
@@ -93,4 +94,27 @@ TEST(TextureEncoder, RejectsNothingToEncode) {
     const std::vector<uint8_t> one(4, 255);
     EXPECT_TRUE(encodeKtx2(one.data(), 0, 1).empty());
     EXPECT_EQ(compressRGBA8(nullptr, 4, 4, TextureFormat::bc7_rgba_unorm), nullptr);
+}
+
+// encodePng(): a PNG that decodes back to the same pixels.
+TEST(TextureEncoder, EncodesPng) {
+    if (!canEncode()) GTEST_SKIP() << "built without the encoder";
+    const uint32_t w = 37, h = 19;  // odd sizes: no row padding assumed
+    std::vector<uint8_t> pixels(size_t(w) * h * 4);
+    for (size_t i = 0; i < pixels.size(); ++i) pixels[i] = uint8_t(i * 31 + (i >> 5));
+    for (int level : {0, 6, 10}) {
+        const auto png = encodePng(pixels.data(), w, h, level);
+        ASSERT_GT(png.size(), 8u);
+        EXPECT_EQ(png[1], 'P');
+        EXPECT_EQ(png[2], 'N');
+        EXPECT_EQ(png[3], 'G');
+        auto image = Image::fromMemory(png.data(), png.size());
+        ASSERT_NE(image, nullptr) << "level " << level;
+        ASSERT_EQ(image->getWidth(), w);
+        ASSERT_EQ(image->getHeight(), h);
+        const auto* back = static_cast<const uint8_t*>(image->getData());
+        EXPECT_EQ(std::vector<uint8_t>(back, back + pixels.size()), pixels) << "level " << level;
+    }
+    EXPECT_TRUE(encodePng(nullptr, 4, 4).empty());
+    EXPECT_TRUE(encodePng(pixels.data(), 0, 4).empty());
 }
