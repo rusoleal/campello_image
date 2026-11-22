@@ -4,6 +4,8 @@ All notable changes to campello_image are documented here.
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-22
+
 ### Added
 - **`encodePng()`**: RGBA8 pixels as a PNG file (8-bit RGBA, deflate level 0–10), with the Basis Universal encoder's deflate (so only where `canEncode()`). For exporters, e.g. campello_bim's glTF export. Test `TextureEncoder.EncodesPng` decodes it back to the same pixels.
 
