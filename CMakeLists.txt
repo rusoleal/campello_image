@@ -1,9 +1,18 @@
 cmake_minimum_required(VERSION 3.22.1)
 
-project(campello_image VERSION 0.6.0)
+project(campello_image VERSION 0.7.0)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# WebAssembly SIMD (-msimd128), on by default: every browser with WebGPU has
+# it. Compiles this directory with it (the library and the third-party code it
+# builds); the target passes it on to its consumers below.
+option(CAMPELLO_IMAGE_WASM_SIMD "WebAssembly builds: use SIMD (-msimd128)" ON)
+if(EMSCRIPTEN AND CAMPELLO_IMAGE_WASM_SIMD)
+    add_compile_options(-msimd128)
+    add_link_options(-msimd128)
+endif()
 
 # Enable unity build to reduce compilation time for dependencies (e.g., libwebp)
 set(CMAKE_UNITY_BUILD ON)
@@ -105,6 +114,12 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Windows" OR ${CMAKE_SYSTEM_NAME} STREQUAL 
     include(windows.cmake)
 else()
     include(linux.cmake)
+endif()
+
+# Consumers compile and link with SIMD too (the link tells wasm-opt to accept it).
+if(EMSCRIPTEN AND CAMPELLO_IMAGE_WASM_SIMD)
+    target_compile_options(${PROJECT_NAME} INTERFACE -msimd128)
+    target_link_options(${PROJECT_NAME} INTERFACE -msimd128)
 endif()
 
 # ---------------------------------------------------------------------------

@@ -7,6 +7,11 @@ All notable changes to campello_image are documented here.
 ### Added
 - **`encodePng()`**: RGBA8 pixels as a PNG file (8-bit RGBA, deflate level 0–10), with the Basis Universal encoder's deflate (so only where `canEncode()`). For exporters, e.g. campello_bim's glTF export. Test `TextureEncoder.EncodesPng` decodes it back to the same pixels.
 
+## [0.7.0] - 2026-11-20
+
+### Changed
+- **WebAssembly builds use SIMD** (`-msimd128`), on by default: every browser with WebGPU supports it. The option `CAMPELLO_IMAGE_WASM_SIMD` turns it off. It applies to the library and the codecs it builds (Basis Universal, libwebp and the others) and is passed on to consumers (compile and link, so wasm-opt accepts the SIMD instructions).
+
 ## [0.6.0] - 2026-11-19
 
 ### Added
