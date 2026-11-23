@@ -16,6 +16,7 @@ add_executable(campello_image_universal_tests
     universal/test_image.cpp
     universal/test_texture_data.cpp
     universal/test_texture_encoder.cpp
+    universal/test_compression.cpp
 )
 
 target_include_directories(campello_image_universal_tests PRIVATE

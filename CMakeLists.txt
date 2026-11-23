@@ -123,6 +123,14 @@ if(EMSCRIPTEN AND CAMPELLO_IMAGE_WASM_SIMD)
 endif()
 
 # ---------------------------------------------------------------------------
+# Zstd compression (compression.hpp): Basis Universal's bundled zstd.c, which
+# this library always links (compiled here, or carried by basisu_encoder
+# when CAMPELLO_IMAGE_ENCODER is on), so the API exists in every build.
+# ---------------------------------------------------------------------------
+target_sources(${PROJECT_NAME} PRIVATE src/compression.cpp)
+target_include_directories(${PROJECT_NAME} PRIVATE ${basis_universal_SOURCE_DIR}/zstd)
+
+# ---------------------------------------------------------------------------
 # KTX2 encoding (texture_encoder.hpp): the Basis Universal encoder
 #
 # basisu_encoder carries its own copy of the transcoder and zstd, so with it
