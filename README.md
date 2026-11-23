@@ -51,6 +51,17 @@ auto texture = compressRGBA8(pixels, 512, 512, TextureFormat::bc7_rgba_unorm, op
 auto file    = encodeKtx2(pixels, 512, 512, options);   // to store or cache
 ```
 
+### Lossless compression (Zstd)
+
+`zstdCompress()` / `zstdDecompress()` compress any bytes with Zstandard: raw data that isn't an image file, such as depth maps or recordings. It is the Zstd that Basis Universal bundles, available in every build:
+
+```cpp
+#include <campello_image/compression.hpp>
+
+auto frame = zstdCompress(depth.data(), depth.size());          // level 3 by default
+auto back  = zstdDecompress(frame.data(), frame.size());        // std::nullopt if invalid
+```
+
 ## Platforms
 
 | Platform | Status |
