@@ -42,7 +42,7 @@ double psnr(const uint8_t* a, const uint8_t* b, size_t texels) {
 } // namespace
 
 TEST(TextureEncoder, EncodesKtx2WithMips) {
-    ASSERT_TRUE(canEncode());
+    if (!canEncode()) GTEST_SKIP() << "built without the encoder";
     const auto image = testImage(64, 64);
     const auto ktx2 = encodeKtx2(image.data(), 64, 64);
     ASSERT_FALSE(ktx2.empty());
@@ -60,6 +60,7 @@ TEST(TextureEncoder, EncodesKtx2WithMips) {
 }
 
 TEST(TextureEncoder, CompressesForEachGpuFamily) {
+    if (!canEncode()) GTEST_SKIP() << "built without the encoder";
     const auto image = testImage(64, 32);
     struct Case {
         TextureFormat format;
@@ -77,6 +78,7 @@ TEST(TextureEncoder, CompressesForEachGpuFamily) {
 }
 
 TEST(TextureEncoder, LinearDataAndOptions) {
+    if (!canEncode()) GTEST_SKIP() << "built without the encoder";
     const auto image = testImage(32, 32);
     EncodeOptions options;
     options.srgb = false;  // a normal map
@@ -94,6 +96,16 @@ TEST(TextureEncoder, RejectsNothingToEncode) {
     const std::vector<uint8_t> one(4, 255);
     EXPECT_TRUE(encodeKtx2(one.data(), 0, 1).empty());
     EXPECT_EQ(compressRGBA8(nullptr, 4, 4, TextureFormat::bc7_rgba_unorm), nullptr);
+}
+
+// Without the encoder every encoding entry point reports failure, as
+// documented, instead of crashing or returning garbage.
+TEST(TextureEncoder, WithoutEncoderReturnsNothing) {
+    if (canEncode()) GTEST_SKIP() << "built with the encoder";
+    const auto image = testImage(8, 8);
+    EXPECT_TRUE(encodeKtx2(image.data(), 8, 8).empty());
+    EXPECT_EQ(compressRGBA8(image.data(), 8, 8, TextureFormat::rgba8), nullptr);
+    EXPECT_TRUE(encodePng(image.data(), 8, 8).empty());
 }
 
 // encodePng(): a PNG that decodes back to the same pixels.
