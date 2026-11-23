@@ -4,6 +4,8 @@ All notable changes to campello_image are documented here.
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-23
+
 ### Added
 - **Zstd compression** (`compression.hpp`): `zstdCompress()` / `zstdDecompress()`, lossless, for raw data that isn't an image file (depth and confidence maps, recordings, caches). It uses the Zstd 1.5.7 that Basis Universal already bundles, so there is no new dependency, and it is available in every build, with or without `CAMPELLO_IMAGE_ENCODER`. Each call writes or reads one standard Zstd frame that records its decompressed size and a checksum; decompression rejects invalid, truncated, corrupted or trailing data and frames larger than `maxSize`. Tests `Zstd.*`.
 
