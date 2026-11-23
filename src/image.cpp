@@ -29,6 +29,7 @@ static size_t bytesPerPixel(ImageFormat fmt)
         case ImageFormat::rgba8:   return 4;
         case ImageFormat::rgba16f: return 8;
         case ImageFormat::rgba32f: return 16;
+        case ImageFormat::rgba16:  return 8;
     }
     return 4; // unreachable
 }
@@ -68,6 +69,11 @@ Image::~Image()
 
 std::shared_ptr<Image> Image::fromFile(const char* path)
 {
+    return fromFile(path, DecodeOptions{});
+}
+
+std::shared_ptr<Image> Image::fromFile(const char* path, const DecodeOptions& options)
+{
     if (!path)
         return nullptr;
 
@@ -93,7 +99,7 @@ std::shared_ptr<Image> Image::fromFile(const char* path)
     if (read != buf.size())
         return nullptr;
 
-    return fromMemory(buf.data(), buf.size());
+    return fromMemory(buf.data(), buf.size(), options);
 }
 
 // ---------------------------------------------------------------------------
@@ -117,6 +123,12 @@ static bool isExr(const uint8_t* data, size_t size)
 }
 
 std::shared_ptr<Image> Image::fromMemory(const uint8_t* data, size_t size)
+{
+    return fromMemory(data, size, DecodeOptions{});
+}
+
+std::shared_ptr<Image> Image::fromMemory(const uint8_t* data, size_t size,
+                                         const DecodeOptions& options)
 {
     if (!data || size == 0)
         return nullptr;
@@ -163,6 +175,26 @@ std::shared_ptr<Image> Image::fromMemory(const uint8_t* data, size_t size)
             handle->height = static_cast<uint32_t>(h);
             handle->format = ImageFormat::rgba32f;
             handle->source = PixelSource::tinyexr;
+            return std::shared_ptr<Image>(new Image(handle));
+        }
+        return nullptr;
+    }
+
+    // --- 16-bit sources (16-bit PNG), when asked to keep them ----------------
+    if (options.keep16Bit &&
+        stbi_is_16_bit_from_memory(data, static_cast<int>(size)))
+    {
+        stbi_us* pixels16 = stbi_load_16_from_memory(
+            data, static_cast<int>(size), &w, &h, &ch, 4 /* force RGBA */);
+
+        if (pixels16)
+        {
+            auto* handle   = new ImageData{};
+            handle->pixels = pixels16;
+            handle->width  = static_cast<uint32_t>(w);
+            handle->height = static_cast<uint32_t>(h);
+            handle->format = ImageFormat::rgba16;
+            handle->source = PixelSource::stb;
             return std::shared_ptr<Image>(new Image(handle));
         }
         return nullptr;

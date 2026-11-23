@@ -8,6 +8,26 @@
 namespace systems::leal::campello_image
 {
     /**
+     * @brief How `Image::fromFile()` / `Image::fromMemory()` decode.
+     *
+     * The defaults keep the classic behaviour: every LDR source decodes to
+     * RGBA8.
+     */
+    struct DecodeOptions
+    {
+        /**
+         * @brief Keep 16 bits per channel for 16-bit sources (16-bit PNG).
+         *
+         * When `true`, a 16-bit source decodes to `ImageFormat::rgba16`
+         * instead of being reduced to RGBA8: a grayscale source fills R, G
+         * and B with its value and A with 65535. Needed for data images
+         * such as depth maps, where 8 bits lose the measurement. 8-bit
+         * sources still decode to RGBA8.
+         */
+        bool keep16Bit = false;
+    };
+
+    /**
      * @brief A decoded CPU-side image.
      *
      * Holds raw pixel data decoded from a file or memory buffer.
@@ -25,6 +45,8 @@ namespace systems::leal::campello_image
      * - `ImageFormat::rgba8`   → `const uint8_t*`  (4 bytes per pixel)
      * - `ImageFormat::rgba16f` → `const uint16_t*` (8 bytes per pixel)
      * - `ImageFormat::rgba32f` → `const float*`    (16 bytes per pixel)
+     * - `ImageFormat::rgba16`  → `const uint16_t*` (8 bytes per pixel; only
+     *   with `DecodeOptions::keep16Bit`)
      *
      * Images are created via the static factory methods `fromFile` and
      * `fromMemory`. Both return `nullptr` on failure.
@@ -72,6 +94,19 @@ namespace systems::leal::campello_image
          * @return A decoded Image, or `nullptr` on failure.
          */
         static std::shared_ptr<Image> fromMemory(const uint8_t* data, size_t size);
+
+        /**
+         * @brief Decodes an image from a file path, with `options`.
+         * @see fromFile(const char*), DecodeOptions
+         */
+        static std::shared_ptr<Image> fromFile(const char* path, const DecodeOptions& options);
+
+        /**
+         * @brief Decodes an image from a memory buffer, with `options`.
+         * @see fromMemory(const uint8_t*, size_t), DecodeOptions
+         */
+        static std::shared_ptr<Image> fromMemory(const uint8_t* data, size_t size,
+                                                 const DecodeOptions& options);
 
         /**
          * @brief Returns the image width in pixels.

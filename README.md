@@ -20,7 +20,7 @@ Each module is designed to work standalone, but integrates seamlessly into the e
 | Format | Decoder | Output format |
 |--------|---------|---------------|
 | JPEG   | stb_image (vendored) | RGBA8 |
-| PNG    | stb_image (vendored) | RGBA8 |
+| PNG    | stb_image (vendored) | RGBA8 (16-bit sources: RGBA16 with `DecodeOptions::keep16Bit`) |
 | BMP    | stb_image (vendored) | RGBA8 |
 | TGA    | stb_image (vendored) | RGBA8 |
 | GIF    | stb_image (vendored, first frame only) | RGBA8 |

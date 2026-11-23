@@ -200,3 +200,69 @@ TEST(ImageFormats, Exr)
     EXPECT_FLOAT_EQ(pixels[last + 2], 0.5f);
     EXPECT_FLOAT_EQ(pixels[last + 3], 1.0f);
 }
+
+// ---------------------------------------------------------------------------
+// 16-bit sources (DecodeOptions::keep16Bit)
+//
+// 2×1 16-bit grayscale PNG with pixels 0x1234 and 0xFEDC, generated offline
+// (Python zlib) and embedded as bytes.
+// ---------------------------------------------------------------------------
+static constexpr uint8_t kGray16_2x1Png[] = {
+    0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+    0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
+    0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x01,
+    0x10, 0x00, 0x00, 0x00, 0x00, 0x81, 0xd9, 0xfc,
+    0x15, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x44, 0x41,
+    0x54, 0x78, 0xda, 0x63, 0x10, 0x32, 0xf9, 0x77,
+    0x07, 0x00, 0x03, 0xc1, 0x02, 0x21, 0xd2, 0xbd,
+    0x55, 0x22, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45,
+    0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
+};
+
+TEST(ImageDecode16Bit, KeepsSixteenBitsWhenAsked)
+{
+    DecodeOptions options;
+    options.keep16Bit = true;
+    auto img = Image::fromMemory(kGray16_2x1Png, sizeof(kGray16_2x1Png), options);
+    ASSERT_NE(img, nullptr);
+    EXPECT_EQ(img->getWidth(), 2u);
+    EXPECT_EQ(img->getHeight(), 1u);
+    EXPECT_EQ(img->getFormat(), ImageFormat::rgba16);
+    EXPECT_EQ(img->getDataSize(), 2u * 8u);
+
+    // Grayscale fills R, G and B with the value; A is opaque.
+    const auto* px = static_cast<const uint16_t*>(img->getData());
+    EXPECT_EQ(px[0], 0x1234);
+    EXPECT_EQ(px[1], 0x1234);
+    EXPECT_EQ(px[2], 0x1234);
+    EXPECT_EQ(px[3], 0xFFFF);
+    EXPECT_EQ(px[4], 0xFEDC);
+    EXPECT_EQ(px[7], 0xFFFF);
+}
+
+TEST(ImageDecode16Bit, DefaultStillDecodesToRgba8)
+{
+    auto img = Image::fromMemory(kGray16_2x1Png, sizeof(kGray16_2x1Png));
+    ASSERT_NE(img, nullptr);
+    EXPECT_EQ(img->getFormat(), ImageFormat::rgba8);
+    EXPECT_EQ(img->getDataSize(), 2u * 4u);
+}
+
+TEST(ImageDecode16Bit, EightBitSourceIgnoresOption)
+{
+    DecodeOptions options;
+    options.keep16Bit = true;
+    auto img = Image::fromMemory(kWhite1x1Png, sizeof(kWhite1x1Png), options);
+    ASSERT_NE(img, nullptr);
+    EXPECT_EQ(img->getFormat(), ImageFormat::rgba8);
+}
+
+TEST(ImageDecode16Bit, FromFileWithOptions)
+{
+    DecodeOptions options;
+    options.keep16Bit = true;
+    // An 8-bit asset through the options overload: same result as before.
+    auto img = Image::fromFile(asset("test.png").c_str(), options);
+    ASSERT_NE(img, nullptr);
+    EXPECT_EQ(img->getFormat(), ImageFormat::rgba8);
+}

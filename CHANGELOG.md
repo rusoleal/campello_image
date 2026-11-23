@@ -4,6 +4,9 @@ All notable changes to campello_image are documented here.
 
 ## [Unreleased]
 
+### Added
+- **16-bit decoding** (`DecodeOptions::keep16Bit`, new `fromFile()`/`fromMemory()` overloads): a 16-bit PNG decodes to the new `ImageFormat::rgba16` (16-bit unsigned per channel; grayscale fills R, G and B, A is 65535) instead of being reduced to RGBA8. For data images such as depth maps (campello_scanner reads TUM RGB-D depth, millimetres x 5 in 16-bit PNG). Opt-in: the default decode is unchanged, and `rgba16` is never returned without the option. Tests `ImageDecode16Bit.*`.
+
 ## [0.8.0] - 2026-11-22
 
 ### Added
