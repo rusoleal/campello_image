@@ -14,6 +14,8 @@ namespace systems::leal::campello_image
         rgba8,   ///< 4 channels, 8 bits per channel (R, G, B, A).
         rgba16f, ///< 4 channels, 16-bit float per channel (R, G, B, A).
         rgba32f, ///< 4 channels, 32-bit float per channel (R, G, B, A).
+        rgba16,  ///< 4 channels, 16-bit unsigned integer per channel (R, G, B, A).
+                 ///< Only with `DecodeOptions::keep16Bit` (16-bit PNG sources).
     };
 
 } // namespace systems::leal::campello_image
