@@ -4,6 +4,11 @@ All notable changes to campello_image are documented here.
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-11-23
+
+### Fixed
+- **Tests in builds without the encoder** (`CAMPELLO_IMAGE_ENCODER=OFF`): `TextureEncoder.EncodesKtx2WithMips`, `CompressesForEachGpuFamily` and `LinearDataAndOptions` asserted `canEncode()` and failed; they now skip, as `EncodesPng` already did. New `TextureEncoder.WithoutEncoderReturnsNothing` checks that such builds report failure from every encoder entry point, as documented. Tests only: the library is unchanged.
+
 ## [0.10.0] - 2026-11-23
 
 ### Added
