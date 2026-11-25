@@ -4,6 +4,8 @@ All notable changes to campello_image are documented here.
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-11-25
+
 ### Added
 - **`encodeJpeg()`** (`texture_encoder.hpp`): RGBA8 to baseline JPEG (alpha dropped), quality 1-100, e.g. camera keyframes. It is available in every build: it uses stb_image_write (vendored, v1.16, public domain), independent of `CAMPELLO_IMAGE_ENCODER`, with its symbols private to the library. Test `EncodeJpeg.RoundTripsAPhotoLikeImage`: quality 90 decodes back within 4 RMSE on a gradient-plus-checker image.
 
