@@ -68,4 +68,17 @@ namespace systems::leal::campello_image
      * false: it uses the Basis Universal encoder's deflate).
      */
     std::vector<uint8_t> encodePng(const uint8_t* rgba, uint32_t width, uint32_t height, int level = 6);
+
+    /**
+     * @brief Encodes RGBA8 pixels (rows top to bottom, 4 bytes per texel) as
+     * a baseline JPEG (alpha dropped), e.g. camera keyframes. `quality` is 1
+     * (smallest) to 100 (best); 90 keeps photographic detail at about a tenth
+     * of the raw size.
+     *
+     * Available in every build (stb_image_write; independent of
+     * CAMPELLO_IMAGE_ENCODER and canEncode()).
+     *
+     * @return The file's bytes, or empty on failure.
+     */
+    std::vector<uint8_t> encodeJpeg(const uint8_t* rgba, uint32_t width, uint32_t height, int quality = 90);
 }
