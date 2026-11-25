@@ -139,8 +139,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${basis_universal_SOURCE_DIR}
 # (campello_image is a shared library). Off: encodeKtx2() returns nothing.
 # ---------------------------------------------------------------------------
 option(CAMPELLO_IMAGE_ENCODER "KTX2 (UASTC) encoding with the Basis Universal encoder" ON)
-target_sources(${PROJECT_NAME} PRIVATE src/texture_encoder.cpp)
-set_source_files_properties(src/texture_encoder.cpp PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
+target_sources(${PROJECT_NAME} PRIVATE src/texture_encoder.cpp src/jpeg_encoder.cpp)
+set_source_files_properties(src/texture_encoder.cpp src/jpeg_encoder.cpp PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
 if(CAMPELLO_IMAGE_ENCODER AND TARGET basisu_encoder)
     set_target_properties(basisu_encoder PROPERTIES EXCLUDE_FROM_ALL FALSE UNITY_BUILD OFF POSITION_INDEPENDENT_CODE ON)
     get_target_property(_campello_image_sources ${PROJECT_NAME} SOURCES)

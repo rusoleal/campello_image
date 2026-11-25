@@ -130,3 +130,45 @@ TEST(TextureEncoder, EncodesPng) {
     EXPECT_TRUE(encodePng(nullptr, 4, 4).empty());
     EXPECT_TRUE(encodePng(pixels.data(), 0, 4).empty());
 }
+
+// encodeJpeg() is in every build (stb_image_write): no canEncode() guard.
+TEST(EncodeJpeg, RoundTripsAPhotoLikeImage)
+{
+    const uint32_t w = 96, h = 64;
+    std::vector<uint8_t> rgba(size_t(w) * h * 4);
+    for (uint32_t y = 0; y < h; ++y) {
+        for (uint32_t x = 0; x < w; ++x) {
+            uint8_t* p = &rgba[(size_t(y) * w + x) * 4];
+            p[0] = uint8_t(x * 255 / (w - 1));
+            p[1] = uint8_t(y * 255 / (h - 1));
+            p[2] = uint8_t(128 + 100 * ((x / 16 + y / 16) % 2 ? 1 : -1) / 4);
+            p[3] = 255;
+        }
+    }
+    const std::vector<uint8_t> jpeg = encodeJpeg(rgba.data(), w, h, 90);
+    ASSERT_GT(jpeg.size(), 100u);
+    EXPECT_LT(jpeg.size(), rgba.size() / 2);
+    EXPECT_EQ(jpeg[0], 0xFF);  // SOI
+    EXPECT_EQ(jpeg[1], 0xD8);
+
+    auto decoded = Image::fromMemory(jpeg.data(), jpeg.size());
+    ASSERT_NE(decoded, nullptr);
+    EXPECT_EQ(decoded->getWidth(), w);
+    EXPECT_EQ(decoded->getHeight(), h);
+    const auto* out = static_cast<const uint8_t*>(decoded->getData());
+    double sum2 = 0.0;
+    for (size_t i = 0; i < size_t(w) * h; ++i) {
+        for (int c = 0; c < 3; ++c) {
+            const double d = double(out[i * 4 + c]) - double(rgba[i * 4 + c]);
+            sum2 += d * d;
+        }
+    }
+    const double rmse = std::sqrt(sum2 / double(size_t(w) * h * 3));
+    EXPECT_LT(rmse, 4.0) << "quality 90 should be close to the source";
+
+    // Lower quality: smaller.
+    EXPECT_LT(encodeJpeg(rgba.data(), w, h, 30).size(), jpeg.size());
+    // Invalid input: empty.
+    EXPECT_TRUE(encodeJpeg(nullptr, w, h).empty());
+    EXPECT_TRUE(encodeJpeg(rgba.data(), 0, h).empty());
+}
