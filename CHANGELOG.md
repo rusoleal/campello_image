@@ -4,6 +4,9 @@ All notable changes to campello_image are documented here.
 
 ## [Unreleased]
 
+### Fixed
+- **Web builds are static again.** Under Emscripten the library was declared `SHARED`; emsdk 7 builds that as a side module (`libcampello_image.so`) the page has to fetch and load at runtime, where older releases quietly built a static library. It is now `STATIC` on the web, so it links into the app's own `.wasm`. Native platforms still build a shared library.
+
 ## [0.11.0] - 2026-11-25
 
 ### Added

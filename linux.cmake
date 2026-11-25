@@ -1,4 +1,13 @@
-add_library(${PROJECT_NAME} SHARED
+# Web: static, linked into the app's own .wasm. A SHARED library here is a
+# side module the page must fetch and load at runtime (emsdk 7 builds one;
+# older releases quietly built a static library).
+if(EMSCRIPTEN)
+    set(_campello_image_library_type STATIC)
+else()
+    set(_campello_image_library_type SHARED)
+endif()
+
+add_library(${PROJECT_NAME} ${_campello_image_library_type}
     src/image.cpp
     src/texture_data.cpp
     src/constants/texture_format.cpp
